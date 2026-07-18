@@ -1,39 +1,45 @@
-import streamlit as st, requests, urllib.parse
+import streamlit as st
+import requests
+import urllib.parse
+
 st.set_page_config(page_title="bairon IA", layout="centered")
 
-if "c" not in st.session_state:
-    st.session_state.c=[]
+if "chat" not in st.session_state:
+    st.session_state.chat = []
 
 with st.expander("Mandar foto, audio o PDF"):
-    up = st.file_uploader(" ", type=["png","jpg","jpeg","pdf","mp3"], label_visibility="collapsed")
+    st.file_uploader("Archivo", type=["png","jpg","jpeg","pdf","mp3"], label_visibility="collapsed")
 
-for rol, txt, img in st.session_state.c:
+for rol, msg, img in st.session_state.chat:
     with st.chat_message(rol):
-        st.write(txt)
+        st.write(msg)
         if img:
             st.image(img, use_container_width=True)
 
 p = st.chat_input("Escribe /imagen para crear imagen")
 
 if p:
-    st.session_state.c.append(("user", p, None))
+    st.session_state.chat.append(("user", p, None))
     with st.chat_message("user"):
         st.write(p)
 
     with st.chat_message("assistant"):
         low = p.lower()
-        clean = p.lower().replace("hazme una imagen de","").replace("haz una imagen de","").replace("hazme una imagen","").replace("/imagen","").strip()
-        if clean == "":
-            clean = "los simpson"
-        if "imagen" in low or "simpson" in low or "homero" in low:
+        if "simpson" in low or "imagen" in low or "homero" in low:
+            clean = p.lower().replace("hazme una imagen de","").replace("haz una imagen de","").replace("imagen de","").replace("/imagen","").strip()
+            if clean == "":
+                clean = "los simpson"
             q = urllib.parse.quote(clean)
             url = "https://image.pollinations.ai/prompt/" + q + "?nologo=true"
             st.write("Generando imagen: " + clean)
             st.image(url, use_container_width=True)
-            st.session_state.c.append(("assistant", "Generando imagen: " + clean, url))
+            st.session_state.chat.append(("assistant", "Generando imagen: " + clean, url))
         else:
-            if "bairon" in low or "quien soy" in low:
-                ans = "Si, eres bairon-dev, mi creador"
+            if "bairon" in low:
+                ans = "Si, eres bairon-dev"
             else:
                 qq = urllib.parse.quote(p)
-                r
+                rr = requests.get("https://text.pollinations.ai/" + qq + "?model=openai", timeout=20)
+                ans = rr.text
+            st.write(ans)
+            st.session_state.chat.append(("assistant", ans, None))
