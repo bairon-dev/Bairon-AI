@@ -1,42 +1,42 @@
 import streamlit as st
 import requests
+import urllib.parse
 
-st.set_page_config(page_title="Bairon AI", page_icon="🤖", layout="wide")
-st.markdown('<style>.block-container{max-width:100%!important} header{visibility:hidden}</style>', unsafe_allow_html=True)
-st.title("Bairon AI")
+st.set_page_config(page_title="bairon IA", layout="centered")
 
-if "h" not in st.session_state:
-    st.session_state.h = []
+if "chat" not in st.session_state:
+    st.session_state.chat = []
 
-for rol, txt, img in st.session_state.h:
-    with st.chat_message(rol, avatar="😊" if rol=="user" else "🤖"):
+with st.expander("Mandar foto, audio o PDF"):
+    st.file_uploader("archivo", type=["png","jpg","jpeg","pdf"], label_visibility="collapsed")
+
+for rol, txt, img in st.session_state.chat:
+    with st.chat_message(rol):
         st.write(txt)
         if img:
-            st.image(img)
+            st.image(img, use_container_width=True)
 
-c1, c2 = st.columns()
-with c2:
-    aud = st.audio_input("🎤")[5][1]
+p = st.chat_input("Escribe /imagen para crear imagen")
 
-prompt = st.chat_input("Pregunta lo que quieras...")
+if p:
+    st.session_state.chat.append(("user", p, None))
+    with st.chat_message("user"):
+        st.write(p)
 
-if aud:
-    prompt = "Hola"
-
-if prompt:
-    st.session_state.h.append(("user", prompt, None))
-    with st.chat_message("user", avatar="😊"):
-        st.write(prompt)
-    with st.chat_message("assistant", avatar="🤖"):
-        with st.spinner("Pensando..."):
-            low = prompt.lower()
-            if "imagen" in low or "dibuja" in low or "foto" in low or "hazme" in low:
-                url = "image.pollinations.ai" + prompt + "?nologo=true"
-                st.image(url)
-                st.write("Aqui tienes tu imagen 👆")
-                st.session_state.h.append(("assistant", "Aqui tienes tu imagen 👆", url))
-            else:
-                r = requests.get("text.pollinations.ai" + prompt + "?model=openai", timeout=60)
-                ans = r.text
-                st.write(ans)
-                st.session_state.h.append(("assistant", ans, None))
+    with st.chat_message("assistant"):
+        low = p.lower()
+        clean = low.replace("hazme una imagen de","").replace("haz una imagen de","").replace("/imagen","").replace("imagen de","").strip()
+        if clean == "":
+            clean = "los simpson"
+        if "imagen" in low or "simpson" in low or "homero" in low:
+            q = urllib.parse.quote(clean)
+            url = "https://image.pollinations.ai/prompt/" + q + "?nologo=true"
+            st.write("Generando imagen: " + clean)
+            st.image(url, use_container_width=True)
+            st.session_state.chat.append(("assistant", "Generando imagen: " + clean, url))
+        else:
+            qq = urllib.parse.quote(p)
+            rr = requests.get("https://text.pollinations.ai/" + qq + "?model=openai", timeout=20)
+            ans = rr.text
+            st.write(ans)
+            st.session_state.chat.append(("assistant", ans, None))
