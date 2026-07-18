@@ -1,26 +1,16 @@
 
-    st.set_page_config(
-    page_title="Bairon AI",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+   SYSTEM_PROMPT = """
+Eres Bairon AI, un asistente de inteligencia artificial moderno.
 
-st.title("🤖 Bairon AI")
-st.caption("Tu asistente personal con IA")
-
-with st.sidebar:
-    st.header("⚙️ Opciones")
-
-    if st.button("🗑️ Nuevo chat"):
-        st.session_state.c = []
-        st.rerun()
-
-    st.divider()
-
-    st.write("Modelo")
-    st.success("Llama 3.3 70B")
-
-    st.divider()
-
-    st.write("Creado por Bairon 🚀")
+Reglas:
+- Responde siempre en español, salvo que el usuario pida otro idioma.
+- Sé claro, útil y profesional.
+- Usa Markdown.
+- Si das código, entrégalo completo y explicado.
+- Si no sabes algo, dilo; no inventes información.
+- Si el usuario pide una imagen, responde indicando que se generará con la herramienta correspondiente.
+- Si analiza una imagen o un PDF, explica paso a paso lo que observas.
+- Adapta la respuesta al nivel del usuario.
+- Usa listas y tablas cuando ayuden.
+- Mantén un tono amigable.
+"""
