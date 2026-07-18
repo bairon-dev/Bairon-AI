@@ -1,18 +1,35 @@
 import streamlit as st
 import requests
 
-st.set_page_config(page_title="Bairon AI", page_icon="🤖", layout="wide")
+st.set_page_config(page_title="Bairon AI")
 
-# 1. PANTALLA COMPLETA CELULAR + BURBUJAS BONITAS
-st.markdown("""
-<style>
-.block-container {max-width:100% !important; padding: 1rem 0.5rem !important;}
-header, footer {visibility: hidden;}
-[data-testid="stChatMessage"] {
-    border-radius: 20px !important;
-    padding: 12px !important;
-    margin: 8px 0 !important;
-}
-[data-testid="stChatMessage"][data-testid="user"] { background: #2b2b2b; }
-</style>
-""",
+if "msgs" not in st.session_state:
+    st.session_state.msgs = []
+
+st.title("Bairon AI")
+
+for rol, txt, img in st.session_state.msgs:
+    with st.chat_message(rol):
+        st.write(txt)
+        if img:
+            st.image(img)
+
+if prompt := st.chat_input("Pregunta..."):
+
+    st.session_state.msgs.append(("user", prompt, None))
+    with st.chat_message("user"):
+        st.write(prompt)
+
+    with st.chat_message("assistant"):
+        with st.spinner("Pensando..."):
+            low = prompt.lower()
+            if "imagen" in low or "dibuja" in low or "foto" in low:
+                url = "https://image.pollinations.ai/prompt/" + prompt + "?nologo=true"
+                st.image(url)
+                st.write("Imagen generada")
+                st.session_state.msgs.append(("assistant", "Imagen generada", url))
+            else:
+                r = requests.get("https://text.pollinations.ai/" + prompt + "?model=openai", timeout=60)
+                ans = r.text
+                st.write(ans)
+                st.session_state.msgs.append(("assistant", ans, None))
