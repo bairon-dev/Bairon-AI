@@ -1,7 +1,8 @@
 
+
 import streamlit as st
-from groq import Groq
 import urllib.parse
+from groq import Groq
 
 st.set_page_config(page_title="bairon IA", layout="centered")
 st.markdown("<h1 style='text-align:center; color:white;'>bairon IA</h1>", unsafe_allow_html=True)
@@ -26,14 +27,23 @@ if prompt:
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        low = prompt.lower()
-        if "/imagen" in low:
-            q = low.replace("/imagen","").strip()
+        text = prompt.lower()
+        if "/imagen" in text:
+            q = text.replace("/imagen", "").strip()
             if q == "":
                 q = "tesla en el cerro de la silla"
-            st.write(f"Generando imagen: {q}")
-            url = "https://image.pollinations.ai/prompt/" + urllib.parse.quote(q) + "?width=1024&height=1024&nologo=true"
+            url = "https://image.pollinations.ai/prompt/" + urllib.parse.quote(q) + "?width=1024&height=1024&nologo=true&enhance=true"
+            st.write("Generando imagen: " + q)
             st.image(url)
             st.session_state.messages.append({"role": "assistant", "content": url})
         else:
-            r
+            completion = client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[
+                    {"role": "system", "content": "Eres bairon IA, de Garcia NL."},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            ans = completion.choices[0].message.content
+            st.markdown(ans)
+            st.session_state.messages.append({"role": "assistant", "content": ans})
