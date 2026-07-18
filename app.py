@@ -1,18 +1,22 @@
 import streamlit as st
 import requests
 
-st.set_page_config(page_title="Bairon AI", page_icon="🤖")
-
-# Pantalla completa celular
-st.markdown("<style>.block-container{padding-top:1rem; max-width:100%} header{visibility:hidden}</style>", unsafe_allow_html=True)
-
 st.title("Bairon AI")
 
-# Guarda historial
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+if "m" not in st.session_state:
+    st.session_state.m = []
 
-# Burbujas + avatar
-for m in st.session_state.messages:
-    avatar = "🧑" if m["role"]=="user" else "🤖"
-    with st.chat_message(m["role"], avatar
+for x in st.session_state.m:
+    with st.chat_message(x[0]):
+        st.write(x[1])
+
+if p := st.chat_input("Pregunta..."):
+    st.session_state.m.append(["user", p])
+    with st.chat_message("user"):
+        st.write(p)
+    with st.chat_message("assistant"):
+        with st.spinner("Pensando..."):
+            r = requests.get("https://text.pollinations.ai/" + p)
+            a = r.text
+            st.write(a)
+    st.session_state.m.append(["assistant", a])
