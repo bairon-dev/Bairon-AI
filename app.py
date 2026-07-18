@@ -1,20 +1,18 @@
 import streamlit as st
-import requests, time
+import requests
 
-st.set_page_config(page_title="Bairon AI", page_icon="🤖", layout="centered")
+st.set_page_config(page_title="Bairon AI", page_icon="🤖")
 
-# --- ESTO HACE QUE OCUPE TODA LA PANTALLA ---
-st.markdown("""
-<style>
-.block-container { max-width: 100% !important; padding: 0 10px !important; }
-header {visibility: hidden;}
-footer {visibility: hidden;}
-[data-testid="stChatMessage"] { border-radius: 18px; margin-bottom: 10px; }
-</style>
-""", unsafe_allow_html=True)
+# Pantalla completa celular
+st.markdown("<style>.block-container{padding-top:1rem; max-width:100%} header{visibility:hidden}</style>", unsafe_allow_html=True)
 
-st.title("Bairon AI 🤖")
+st.title("Bairon AI")
 
-# 1. GUARDA HISTORIAL
+# Guarda historial
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role":"assistant","content":"Hola, soy Bairon AI 👋
+    st.session_state.messages = []
+
+# Burbujas + avatar
+for m in st.session_state.messages:
+    avatar = "🧑" if m["role"]=="user" else "🤖"
+    with st.chat_message(m["role"], avatar
