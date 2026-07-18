@@ -1,13 +1,47 @@
 import streamlit as st, requests, urllib.parse
-
 st.set_page_config(page_title="bairon IA", layout="centered")
-st.markdown("""
-<style>
-header, footer, #MainMenu {visibility:hidden}
-.block-container{max-width:700px!important; padding-top:10px}
-h1{font-family:monospace; text-align:center; font-size:48px; letter-spacing:8px; font-weight:900; margin:20px 0}
-div[data-testid='stExpander']{background:#111111!important; border:1px solid #2a2a2a!important; border-radius:12px!important}
-div[data-testid='stChatMessage']{background:transparent!important; border:none!important; padding:5px 0!important}
-/* burbuja usuario blanca */
-div[data-testid='stChatMessage']:has(div[data-testid='stChatMessageAvatarUser']){justify-content:flex-end}
-div[data-testid='stChatMessage']:has(div[data-testid='stChatMessageAvatarUser']) div[data-testid='stMarkdownContainer']{background:white!important; color:black!important; border-radius
+st.markdown('<h1 style="text-align:center; letter-spacing:8px; font-size:45px">bairon IA</h1>', unsafe_allow_html=True)
+
+if "c" not in st.session_state:
+    st.session_state.c=[]
+
+with st.expander("📎 Mandar foto, audio o PDF"):
+    up = st.file_uploader("sube archivo", type=["png","jpg","jpeg","pdf","mp3","wav"], label_visibility="collapsed")
+
+for rol, txt, img in st.session_state.c:
+    with st.chat_message(rol):
+        st.write(txt)
+        if img:
+            st.image(img, use_container_width=True)
+
+p = st.chat_input("Escribe /imagen para crear imagen")
+
+if p:
+    st.session_state.c.append(("user", p, None))
+    with st.chat_message("user"):
+        st.write(p)
+    with st.chat_message("assistant"):
+        low = p.lower()
+        if "bairon" in low or "quien soy" in low or "me conoces" in low:
+            ans = "Si, eres Bairon, bairon-dev, mi creador"
+            st.write(ans)
+            st.session_state.c.append(("assistant", ans, None))
+        elif "quien te creo" in low:
+            ans = "Me creo bairon-dev"
+            st.write(ans)
+            st.session_state.c.append(("assistant", ans, None))
+        elif "imagen" in low:
+            clean = p.replace("/imagen","").replace("Hazme una imagen de","").replace("Haz una imagen de","").replace("imagen de","").strip()
+            if clean == "":
+                clean = "un perro"
+            q = urllib.parse.quote(clean)
+            url = "https://image.pollinations.ai/prompt/" + q + "?nologo=true"
+            st.write("Generando imagen: " + clean)
+            st.image(url, use_container_width=True)
+            st.session_state.c.append(("assistant", "Generando imagen: " + clean, url))
+        else:
+            q = urllib.parse.quote(p)
+            r = requests.get("https://text.pollinations.ai/" + q + "?model=openai", timeout=20)
+            ans = r.text
+            st.write(ans)
+            st.session_state.c.append(("assistant", ans, None))
