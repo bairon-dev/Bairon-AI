@@ -2,95 +2,121 @@ import streamlit as st
 import requests
 import urllib.parse
 
-# 1. Configuración de página optimizada para celulares
+# 1. Configuración de pantalla completa móvil
 st.set_page_config(page_title="Bairon AI", page_icon="🤖", layout="wide")
 
-# 2. DISEÑO CHATGPT: CSS Avanzado para mover el usuario a la derecha y estilizar burbujas
+# 2. CSS Avanzado: Estilo ChatGPT Real (Burbujas flotantes, alineadas y colores correctos)
 st.markdown('''
     <style>
-        /* Pantalla completa real en móviles */
-        .block-container {
-            max-width: 100% !important;
-            padding-top: 1rem !important;
-            padding-bottom: 6rem !important;
-            padding-left: 0.5rem !important;
-            padding-right: 0.5rem !important;
-        }
-        header, footer {visibility: hidden !important;}
+        .block-container { max-width: 100% !important; padding-top: 1rem !important; padding-bottom: 7rem !important; }
+        header, footer { visibility: hidden !important; }
         
-        /* Forzar que el mensaje del usuario se vaya a la derecha como ChatGPT */
-        .stChatMessage:has(img[alt="😊"]), .stChatMessage:has([data-testid="stChatMessageAvatar"]:-webkit-any-link) {
-            flex-direction: row-reverse !important;
-            text-align: right !important;
+        /* Contenedor general del mensaje */
+        .chat-row { display: flex; margin-bottom: 15px; width: 100%; }
+        .user-row { justify-content: flex-end; }
+        .ai-row { justify-content: flex-start; }
+        
+        /* Burbuja del Usuario: Blanca/Gris Claro con texto oscuro */
+        .user-bubble {
+            background-color: #f0f0f0 !important;
+            color: #1a1a1a !important;
+            padding: 12px 16px;
+            border-radius: 20px 20px 4px 20px;
+            max-width: 75%;
+            box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
+            font-size: 16px;
         }
         
-        /* Ajustar el fondo de las burbujas para modo oscuro premium */
-        div[data-testid="stChatMessage"] {
-            background-color: #212121 !important;
-            border-radius: 15px !important;
-            padding: 10px !important;
-            margin-bottom: 10px !important;
+        /* Burbuja de la IA: Oscura Premium con texto blanco */
+        .ai-bubble {
+            background-color: #2f2f2f !important;
+            color: #ffffff !important;
+            padding: 12px 16px;
+            border-radius: 20px 20px 20px 4px;
+            max-width: 75%;
+            box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+            font-size: 16px;
         }
+        
+        /* Estilo para imágenes dentro del chat */
+        .chat-img { border-radius: 10px; max-width: 100%; margin-top: 8px; }
     </style>
 ''', unsafe_allow_html=True)
 
 st.title("🤖 Bairon AI")
 
-# 3. Inicialización del historial de conversación
+# 3. Inicializar el historial en la sesión
 if "h" not in st.session_state:
     st.session_state.h = []
 
-# 4. Renderizado del historial en tiempo real
-for rol, txt, img in st.session_state.h:
-    with st.chat_message(rol, avatar="😊" if rol == "user" else "🤖"):
-        if txt:
-            st.write(txt)
-        if img:
-            st.image(img)
+# 4. NUEVO: Barra Lateral para subir Imágenes y PDFs (Como en tu lista de deseos)
+with st.sidebar:
+    st.header("Anexar Archivos")
+    foto_subida = st.file_uploader("Mandar foto o imagen", type=["png", "jpg", "jpeg"])
+    pdf_subido = st.file_uploader("Mandar documento PDF", type=["pdf"])
+    if foto_subida:
+        st.success("📸 Imagen cargada listo para procesar.")
+    if pdf_subido:
+        st.success("📄 PDF cargado listo para leer.")
 
-# 5. Entrada de Audio integrada (ocupa toda la pantalla abajo)
+# 5. Renderizar el historial con el nuevo diseño visual de burbujas
+for rol, txt, img in st.session_state.h:
+    if rol == "user":
+        st.markdown(f'<div class="chat-row user-row"><div class="user-bubble">😊 <b>Tú:</b><br>{txt}</div></div>', unsafe_allow_html=True)
+    else:
+        if img:
+            st.markdown(f'<div class="chat-row ai-row"><div class="ai-bubble">🤖 <b>Bairon AI:</b><br>{txt}<br><img src="{img}" class="chat-img"></div></div>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div class="chat-row ai-row"><div class="ai-bubble">🤖 <b>Bairon AI:</b><br>{txt}</div></div>', unsafe_allow_html=True)
+
+# 6. Entrada de Audio inferior
 aud = st.audio_input("🎤 Usa tu voz")
 
-# 6. Barra de escritura fija abajo (Estilo ChatGPT)
+# 7. Entrada de texto fija estilo chat
 prompt = st.chat_input("Pregunta lo que quieras...")
 
-# Si usan el micrófono, activamos la respuesta
 if aud and not prompt:
     prompt = "Hola (Mensaje de voz)"
 
-# 7. Cerebro de la IA (Texto e Imágenes perfectas)
+# Modificar el prompt si hay archivos subidos para que la IA sepa qué hacer
 if prompt:
-    # Registrar y mostrar mensaje del usuario a la derecha
+    if foto_subida:
+        prompt += " [El usuario adjuntó una imagen]"
+    if pdf_subido:
+        prompt += " [El usuario adjuntó un documento PDF]"
+
+    # Mostrar inmediatamente el mensaje del usuario a la derecha en burbuja blanca
     st.session_state.h.append(("user", prompt, None))
-    with st.chat_message("user", avatar="😊"):
-        st.write(prompt)
+    st.markdown(f'<div class="chat-row user-row"><div class="user-bubble">😊 <b>Tú:</b><br>{prompt}</div></div>', unsafe_allow_html=True)
         
-    # Respuesta del asistente a la izquierda
-    with st.chat_message("assistant", avatar="🤖"):
-        with st.spinner("Pensando..."):  # Indicador de carga
-            low = prompt.lower()
+    # Procesar respuesta de la IA a la izquierda
+    low = prompt.lower()
+    
+    # Evaluar si el usuario quiere crear un dibujo/imagen
+    if any(p in low for p in ["imagen", "dibuja", "foto", "hazme", "haz", "crea"]):
+        with st.spinner("Generando imagen perfecta..."):
+            prompt_codificado = urllib.parse.quote(prompt)
+            # URL corregida con parámetros HD para evitar deformaciones
+            url_imagen = f"https://pollinations.ai{prompt_codificado}?width=1024&height=1024&nologo=true&private=true"
             
-            # Filtro inteligente para saber si pide una foto/dibujo
-            if any(palabra in low for palabra in ["imagen", "dibuja", "foto", "hazme", "haz", "crea"]):
+            msg = "Aquí tienes la imagen que me pediste:"
+            st.markdown(f'<div class="chat-row ai-row"><div class="ai-bubble">🤖 <b>Bairon AI:</b><br>{msg}<br><img src="{url_imagen}" class="chat-img"></div></div>', unsafe_allow_html=True)
+            st.session_state.h.append(("assistant", msg, url_imagen))
+    else:
+        # Respuestas de texto continuas
+        with st.spinner("Pensando respuesta..."):
+            try:
                 prompt_codificado = urllib.parse.quote(prompt)
-                # Forzamos calidad HD (1024x1024) y evitamos deformaciones en los rostros
-                url_imagen = f"https://pollinations.ai{prompt_codificado}?width=1024&height=1024&nologo=true&private=true"
+                # CORRECCIÓN DE CONEXIÓN: Ruta de endpoint correcta para Pollinations
+                url_texto = f"https://pollinations.ai{prompt_codificado}"
                 
-                st.image(url_imagen)
-                mensaje_asistente = "Aquí tienes tu imagen 👆"
-                st.write(mensaje_asistente)
-                st.session_state.h.append(("assistant", mensaje_asistente, url_imagen))
-                
-            else:
-                # Generación de respuestas de texto continuas
-                try:
-                    prompt_codificado = urllib.parse.quote(prompt)
-                    url_texto = f"https://pollinations.ai{prompt_codificado}?model=openai"
-                    
-                    r = requests.get(url_texto, timeout=30)
-                    ans = r.text if r.status_code == 200 else "Tuve un pequeño problema en mi servidor central."
-                except Exception:
-                    ans = "Error de conexión. Revisa tu internet."
-                
-                st.write(ans)
-                st.session_state.h.append(("assistant", ans, None))
+                r = requests.get(url_texto, timeout=30)
+                if r.status_code == 200:
+                    ans = r.text
+                else:
+                    ans = f"Error del servidor central (Código {r.status_code}). Inténtalo de nuevo."
+            except Exception as e:
+                ans = "Error de red al conectar con el cerebro digital. Comprueba tu conexión."
+            
+            st.markdown(f'<div class="chat-row ai-row"><div class="ai-bubble">🤖 <b>Bairon AI:</b><br>{ans}</div></div>', unsafe_allow_html=True)
+            st.session_state.h.append(("assistant", ans, None))
