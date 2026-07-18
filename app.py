@@ -1,60 +1,25 @@
-import streamlit as st
-import requests
+import streamlit as st, requests, urllib.parse
 
 st.set_page_config(page_title="Bairon AI", page_icon="🤖", layout="wide")
+st.markdown("<style>.block-container{max-width:100%!important} header,footer{visibility:hidden}</style>", unsafe_allow_html=True)
 
-# --- ESTO HACE LAS 6 COSAS QUE PIDIO CHATGPT ---
-st.markdown("""
-<style>
-.block-container{max-width:100%!important; padding-top:1rem;}
-header, footer{visibility:hidden;}
-/* Burbujas usuario derecha, IA izquierda */
-[data-testid="stChatMessage"]{border-radius:20px; margin:8px 0;}
-</style>
-""", unsafe_allow_html=True)
+st.markdown("<div style='text-align:center'><h1>🤖</h1><h2>BAIRON IA</h2><p>Tu asistente personal</p></div>", unsafe_allow_html=True)
 
-st.title("Bairon AI")
+if "chat" not in st.session_state:
+    st.session_state.chat = []
 
-if "msgs" not in st.session_state:
-    st.session_state.msgs = []
-
-# Para mandar foto, audio o PDF (lo que ya tenias)
 with st.expander("📎 Mandar foto, audio o PDF"):
-    up = st.file_uploader("Foto o PDF", type=["png","jpg","jpeg","pdf"])
-    aud = st.audio_input("🎤 Grabar voz")
+    foto = st.file_uploader("Foto o PDF", type=["png","jpg","jpeg","pdf"])
+    if foto and "pdf" not in foto.type:
+        st.image(foto)
 
-# 1. Burbujas + 2. Avatar + 4. Historial
-for rol, txt, img in st.session_state.msgs:
-    avatar = "😊" if rol=="user" else "🤖"
-    with st.chat_message(rol, avatar=avatar):
-        st.write(txt)
+voz = st.audio_input("🎤 Grabar voz")
+
+for rol, msg, img in st.session_state.chat:
+    av = "😊" if rol=="user" else "🤖"
+    with st.chat_message(rol, avatar=av):
+        st.write(msg)
         if img:
-            st.image(img, use_container_width=True)
+            st.image(img)
 
-prompt = st.chat_input("Escribe /imagen para crear imagen")
-
-# 5. Entrada por voz
-if aud:
-    prompt = "Hola Bairon"
-
-if prompt:
-    st.session_state.msgs.append(("user", prompt, None))
-    with st.chat_message("user", avatar="😊"):
-        st.write(prompt)
-
-    with st.chat_message("assistant", avatar="🤖"):
-        # 3. Indicador Pensando...
-        with st.spinner("Pensando..."):
-            low = prompt.lower()
-            # Ya integraste generacion de imagenes
-            if "/imagen" in low or "hazme una imagen" in low or "imagen de" in low or "dibuja" in low:
-                clean = prompt.replace("/imagen","").replace("hazme una imagen de","").strip()
-                st.write(f"Generando imagen: {clean}")
-                url = f"https://image.pollinations.ai/prompt/{clean}?width=1024&height=1024&nologo=true&model=turbo"
-                st.image(url)
-                st.session_state.msgs.append(("assistant", f"Generando imagen: {clean}", url))
-            else:
-                r = requests.get(f"https://text.pollinations.ai/{prompt}?model=openai", timeout=60)
-                ans = r.text
-                st.write(ans)
-                st.session_state.msgs.append(("assistant", ans, None))
+prompt = st
