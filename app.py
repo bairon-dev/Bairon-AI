@@ -75,12 +75,3 @@ if prompt:
         ans = resp.choices[0].message.content
         st.markdown(f'<div class="bot-bubble">{ans}</div>', unsafe_allow_html=True)
         st.session_state.messages.append({"role":"assistant","content":ans})
-if "mensajes" not in st.session_state:
-    st.session_state.mensajes = []
-
-for m in st.session_state.mensajes:
-    st.chat_message(m["role"]).write(m["content"])
-
-# cuando el usuario escribe:
-st.session_state.mensajes.append({"role": "user", "content": prompt})
-st.session_state.mensajes.append({"role": "assistant", "content": respuesta})
