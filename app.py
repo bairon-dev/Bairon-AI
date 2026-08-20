@@ -17,6 +17,7 @@ h1 {text-align:center; font-weight:800; letter-spacing:5px; font-size:45px!impor
 st.markdown("<h1>bairon IA</h1>", unsafe_allow_html=True)
 
 client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -41,24 +42,30 @@ if prompt:
     st.markdown(f'<div class="user-bubble">{prompt}</div>', unsafe_allow_html=True)
     contexto = ""
     b64_img = None
+
     if pdf:
         try:
             reader = PyPDF2.PdfReader(pdf)
             txt = "".join([(p.extract_text() or "") for p in reader.pages[:8]])[:6000]
             contexto += f" PDF: {txt} "
-        except: pass
+        except:
+            pass
+
     if audio:
         try:
             tr = client.audio.transcriptions.create(file=(audio.name, audio.getvalue()), model="whisper-large-v3", response_format="json")
             contexto += f" Audio: {tr.text} "
-        except: pass
+        except:
+            pass
+
     if foto:
         try:
             img = Image.open(foto)
             buff = io.BytesIO()
             img.save(buff, format="JPEG")
             b64_img = base64.b64encode(buff.getvalue()).decode()
-        except: pass
+        except:
+            pass
 
     low = prompt.lower()
     triggers = ["/imagen", "hazme una imagen", "creame una imagen", "crea una imagen", "genera una imagen", "generame una imagen", "haz una imagen", "dibujame", "imagen de"]
@@ -75,25 +82,8 @@ if prompt:
         url = "https://image.pollinations.ai/prompt/" + urllib.parse.quote(q) + "?width=1024&height=1024&nologo=true&enhance=true"
         st.image(url)
         st.session_state.messages.append({"role":"assistant","content":url})
+
     elif b64_img:
         resp = client.chat.completions.create(
-            model="meta-llama/llama-4-scout-17b-16e-instruct",
-            messages=[{"role":"user","content":[{"type":"text","text":f"Eres bairon IA creado por Bairon de Garcia NL. Nunca digas Meta. Contexto:{contexto} Pregunta:{prompt}"},{"type":"image_url","image_url":{"url":f"data:image/jpeg;base64,{b64_img}"}}]}]
-        )
-        ans = resp.choices[0].message.content
-        st.markdown(f'<div class="bot-bubble">{ans}</div>', unsafe_allow_html=True)
-        st.session_state.messages.append({"role":"assistant","content":ans})
-    else:
-        historial = [{"role": "system", "content": "Eres bairon IA creado por Bairon de Garcia NL. Nunca digas Meta."}]
-        for h in st.session_state.messages[-6:]:
-            if "pollinations.ai" not in h["content"]:
-                historial.append(h)
-        historial[-1] = {"role": "user", "content": f"Contexto: {contexto} Pregunta: {prompt}"}
-        resp = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=historial,
-            temperature=0.7
-        )
-        ans = resp.choices[0].message.content
-        st.markdown(f'<div class="bot-bubble">{ans}</div>', unsafe_allow_html=True)
-        st.session_state.messages.append({"role":"assistant","content":ans})
+            model="meta-llama/llama-4-maverick-17b-128e-instruct",
+            messages=[{"role":"user","content":[{"type":"text","text":f"Eres bairon IA creado por Bairon de Garcia NL. Nunca digas Meta. Contexto:{contexto}
