@@ -71,7 +71,8 @@ if prompt:
         st.markdown(f'<div class="bot-bubble">{ans}</div>', unsafe_allow_html=True)
         st.session_state.messages.append({"role":"assistant","content":ans})
     else:
-        resp = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role":"system","content":f"Eres bairon IA creado por Bairon en Garcia NL. Nunca digas que eres de Meta. {contexto}"},{"role":"user","content":prompt}])
-        ans = resp.choices[0].message.content
-        st.markdown(f'<div class="bot-bubble">{ans}</div>', unsafe_allow_html=True)
-        st.session_state.messages.append({"role":"assistant","content":ans})
+        resp = client.chat.completions.create(
+    model="llama-3.3-70b-versatile",
+    messages=messages,
+    temperature=0.7
+)
