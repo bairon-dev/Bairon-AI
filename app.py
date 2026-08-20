@@ -46,15 +46,17 @@ if prompt:
     if pdf:
         try:
             reader = PyPDF2.PdfReader(pdf)
-            txt = "".join([(p.extract_text() or "") for p in reader.pages[:8]])[:6000]
-            contexto += f" PDF: {txt} "
+            txt = ""
+            for p in reader.pages[:8]:
+                txt += (p.extract_text() or "")
+            contexto += " PDF: " + txt[:6000]
         except:
             pass
 
     if audio:
         try:
             tr = client.audio.transcriptions.create(file=(audio.name, audio.getvalue()), model="whisper-large-v3", response_format="json")
-            contexto += f" Audio: {tr.text} "
+            contexto += " Audio: " + tr.text
         except:
             pass
 
@@ -72,7 +74,7 @@ if prompt:
     es_imagen = any(t in low for t in triggers)
 
     if es_imagen:
-        q = prompt.lower()
+        q = low
         for t in triggers:
             q = q.replace(t, "")
         q = q.strip().lstrip("de").strip()
@@ -84,6 +86,18 @@ if prompt:
         st.session_state.messages.append({"role":"assistant","content":url})
 
     elif b64_img:
+        texto = "Eres bairon IA creado por Bairon de Garcia NL. Contexto: " + contexto + " Pregunta: " + prompt
+        url_img = "data:image/jpeg;base64," + b64_img
         resp = client.chat.completions.create(
             model="meta-llama/llama-4-maverick-17b-128e-instruct",
-            messages=[{"role":"user","content":[{"type":"text","text":f"Eres bairon IA creado por Bairon de Garcia NL. Nunca digas Meta. Contexto:{contexto}
+            messages=[{"role":"user","content":[{"type":"text","text":texto},{"type":"image_url","image_url":{"url":url_img}}]}]
+        )
+        ans = resp.choices[0].message.content
+        st.markdown(f'<div class="bot-bubble">{ans}</div>', unsafe_allow_html=True)
+        st.session_state.messages.append({"role":"assistant","content":ans})
+
+    else:
+        historial = []
+        historial.append({"role": "system", "content": "Eres bairon IA creado por Bairon de Garcia NL. Nunca digas Meta."})
+        for h in st.session_state.messages[-6:]:
+            if "pollinations.ai" not
