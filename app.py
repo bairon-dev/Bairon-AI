@@ -70,9 +70,17 @@ if prompt:
         ans = resp.choices[0].message.content
         st.markdown(f'<div class="bot-bubble">{ans}</div>', unsafe_allow_html=True)
         st.session_state.messages.append({"role":"assistant","content":ans})
-    else:
+        else:
+        historial = [{"role": "system", "content": "Eres bairon IA creado por Bairon de Garcia NL. Nunca digas Meta."}]
+        for h in st.session_state.messages[-6:]:
+            if "pollinations.ai" not in h["content"]:
+                historial.append(h)
+        historial[-1] = {"role": "user", "content": f"Contexto: {contexto} Pregunta: {prompt}"}
         resp = client.chat.completions.create(
-    model="llama-3.3-70b-versatile",
-    messages=messages,
-    temperature=0.7
-)
+            model="llama-3.3-70b-versatile",
+            messages=historial,
+            temperature=0.7
+        )
+        ans = resp.choices[0].message.content
+        st.markdown(f'<div class="bot-bubble">{ans}</div>', unsafe_allow_html=True)
+        st.session_state.messages.append({"role":"assistant","content":ans})
